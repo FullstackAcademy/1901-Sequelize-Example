@@ -1,9 +1,7 @@
-const Projects = require('./projects');
-const Tasks = require('./tasks');
-const Users = require('./users');
+const Task = require('./task');
+const Project = require('./project');
 
 module.exports = {
-    Projects,
-    Tasks,
-    Users,
+    Task,
+    Project,
 };

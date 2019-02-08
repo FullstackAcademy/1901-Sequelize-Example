@@ -1,52 +1,31 @@
-const { Projects, Tasks, Users } = require('./models');
-const initDb = require('./index');
+const { Project, Task } = require('./models');
+const { initDb } = require('./index');
 
-const seedDb = () => {
-    const initProjects = () => Projects.create({
-        name: 'Sequelize Workshop',
+initDb(true)
+    .then(() => {
+        // createProject is a promise
+        const createProject = Project.create({
+            name: 'Sequelize Workshop',
+            date: new Date(),
+        });
+
+        const createTasks = Promise.all([
+            Task.create({ name: 'Lecture', difficulty: 3 }),
+            Task.create({ name: 'Live Coding', difficulty: 10 }),
+        ]);
+
+        return Promise.all([createProject, createTasks]);
+    })
+    .then(([project, tasks]) => {
+        const [lecture, liveCode] = tasks;
+
+        return project.setTasks(tasks);
+    })
+    .then(() => {
+        console.log('I have seeded the database.');
+        process.exit(0);
+    })
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
     });
-
-    const initTasks = () => Promise.all([
-        Tasks.create({ name: 'Lecture' }),
-        Tasks.create({ name: 'Review' }),
-    ]);
-
-    const initUsers = () => Promise.all([
-        Users.create({
-            email: 'eliot@eliot.com',
-            name: 'Eliot Szwajkowski',
-        }),
-        Users.create({
-            email: 'prof@prof.com',
-            name: 'Eric Katz',
-        }),
-    ]);
-
-    const initAll = () => Promise.all([
-        initProjects(),
-        initTasks(),
-        initUsers(),
-    ]);
-
-    return initDb(true)
-        .then(initAll)
-        .then(([project, tasks, users]) => {
-            const [ eliot, prof ] = users;
-            const [ lecture, review ] = tasks;
-
-            return Promise.all([
-                project.setTasks(tasks),
-                project.setUsers(users),
-                eliot.setTasks([lecture]),
-                prof.setTasks([review]),
-            ]);
-        })
-        .then(() => {
-            console.log('Successfully seeded database.');
-        })
-        .catch(e => console.error(e));
-};
-
-seedDb()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1));

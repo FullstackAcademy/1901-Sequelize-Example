@@ -1,27 +1,21 @@
-const Sequelize = require('sequelize');
-const { Projects, Tasks, Users } = require('./models');
-const db = require('./connection');
+const db = require('./db');
+const { Project, Task } = require('./models');
 
-const initDb = (force = false) => new Promise((resolve, reject) => {
-    db.connection.authenticate()
+const initDb = (force = false) => {
+    return db
+        .authenticate()
         .then(() => {
-            Users.belongsTo(Projects);
-            Tasks.belongsTo(Users);
-            Tasks.belongsTo(Projects);
-            Projects.hasMany(Users);
-            Projects.hasMany(Tasks);
-            Users.hasMany(Tasks);
+            Project.hasMany(Task);
+            Task.belongsTo(Project);
 
-            return db.connection.sync({ force });
+            return db.sync({ force });
         })
-        .then(() => {
-            console.log('Successfully connected to DB.');
-            resolve();
-        })
-        .catch((e) => {
-            console.error('Failure connecting to DB.');
-            reject(e);
-        });
-});
+};
 
-module.exports = initDb;
+module.exports = {
+    initDb,
+    models: {
+        Project,
+        Task,
+    },
+};

@@ -1,6 +1,13 @@
+const { initDb } = require('./db');
 const server = require('./api');
 
-server()
-    .then((app) => {
-        app.listen(3000, () => { console.log('Server started!'); });
+initDb()
+    .then(() => {
+        server.listen(3000, () => {
+            console.log('Server is listening!');
+        });
+    })
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
     });

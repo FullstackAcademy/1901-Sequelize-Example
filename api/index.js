@@ -1,30 +1,86 @@
 const express = require('express');
-const initDb = require('../db');
-const { tasksRouter, usersRouter, projectsRouter } = require('./routes');
+const { models } = require('../db');
 const app = express();
 
-app.use(express.json());
+app.get('/tasks/:id', (req, res, next) => {
+   const { params: { id } } = req;
 
-const apiRouter = express.Router();
+   if (typeof id === 'string') {
+       models.Task
+           .findByPk(parseInt(id), {
+               include: [models.Project]
+           })
+           .then((task) => {
+               if (!task) res.sendStatus(404);
+               const { name, difficulty, project } = task;
 
-apiRouter.get('/tasks/**', tasksRouter);
-apiRouter.get('/users/**', usersRouter);
-apiRouter.get('/projects/**', projectsRouter);
-
-app.use('/api', apiRouter);
-
-app.all('*', (req, res) => {
-    console.log('Request hit end of possibilities, returning 404.');
-    res.sendStatus(404);
+               res.send({
+                   task: {
+                       name,
+                       difficulty,
+                       project: {
+                           name: project.name,
+                           date: project.date,
+                       },
+                   }
+               })
+           })
+   } else {
+       res.sendStatus(404);
+   }
 });
 
-const initializeServer = () => initDb()
-    .then(() => {
-        return app;
-    })
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    });
+app.get('/projects/:id', (req, res, next) => {
+    const { params: { id } } = req;
 
-module.exports = initializeServer;
+    if (typeof id === 'string') {
+        models.Project
+            .findByPk(parseInt(id), {
+                include: [models.Task]
+            })
+            .then((project) => {
+                if (!project) res.sendStatus(404);
+                const { name, date, tasks } = project;
+
+                res.send({
+                    project: {
+                        name,
+                        date,
+                        tasks: tasks.map(({ name, difficulty }) => ({ name, difficulty })),
+                    }
+                })
+            })
+    } else {
+        res.sendStatus(404);
+    }
+});
+
+app.get('/tasks', (req, res, next) => {
+    models.Task
+        .findAll()
+        .then((tasks) => {
+             res.send({
+                 tasks: tasks.map(({ name, difficulty }) => ({
+                     name,
+                     difficulty,
+                 }))
+             })
+        })
+        .catch(next);
+});
+
+app.get('/projects', (req, res, next) => {
+    models.Project
+        .findAll()
+        .then((projects) => {
+            res.send({
+                projects: projects.map(({ name, date }) => ({
+                    name,
+                    date,
+                }))
+            })
+        })
+        .catch(next);
+});
+
+module.exports = app;
