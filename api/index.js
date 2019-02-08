@@ -12,15 +12,15 @@ app.get('/tasks/:id', (req, res, next) => {
            })
            .then((task) => {
                if (!task) res.sendStatus(404);
-               const { name, difficulty, project } = task;
+               const { name, difficulty, project: { name: projectName, date } } = task;
 
                res.send({
                    task: {
                        name,
                        difficulty,
                        project: {
-                           name: project.name,
-                           date: project.date,
+                           name: projectName,
+                           date,
                        },
                    }
                })
